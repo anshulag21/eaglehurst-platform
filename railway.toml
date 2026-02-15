@@ -1,0 +1,15 @@
+# Railway Configuration for Eaglehurst Platform
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+startCommand = "gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+
+# For the Frontend service (if deploying separately in Railway)
+# You can create a second service in Railway pointing to the /frontend directory
+# or use this root config if deploying as a monorepo.
