@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px; white-space: pre-wrap; font-family: monospace; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+        input[type="text"] { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Eaglehurst API Debug Tool</h1>
+        
+        <div class="section">
+            <h3>🔑 Authentication</h3>
+            <input type="text" id="email" placeholder="Email" value="james.investor@eaglehursttestdev.co.in">
+            <input type="text" id="password" placeholder="Password" value="buyer123">
+            <button onclick="login()">Login</button>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Test APIs</h3>
+            <button onclick="testHealth()">Test Health</button>
+            <button onclick="testListings()">Test Listings</button>
+            <button onclick="testNotifications()">Test Notifications</button>
+            <button onclick="testProfile()">Test Profile</button>
+            <div id="apiResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Debug Info</h3>
+            <button onclick="showDebugInfo()">Show Debug Info</button>
+            <div id="debugResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                console.log('Making request to:', url);
+                console.log('Options:', options);
+                
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                const text = await response.text();
+                console.log('Response text:', text);
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { raw: text, parseError: e.message };
+                }
+
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                };
+            } catch (error) {
+                console.error('Request failed:', error);
+                return {
+                    ok: false,
+                    status: 0,
+                    statusText: 'Network Error',
+                    data: { error: error.message, stack: error.stack }
+                };
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await makeRequest(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            const resultDiv = document.getElementById('loginResult');
+            
+            if (result.ok && result.data.success) {
+                authToken = result.data.data.access_token;
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Login successful!\nToken: ${authToken.substring(0, 50)}...`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Login failed:\n${JSON.stringify(result, null, 2)}`;
+            }
+        }
+
+        async function testHealth() {
+            const result = await makeRequest(`${API_BASE}/../health`);
+            showResult('apiResult', result, 'Health Check');
+        }
+
+        async function testListings() {
+            if (!authToken) {
+                showResult('apiResult', { error: 'Please login first' }, 'Listings');
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/listings/?page=1&limit=4`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            showResult('apiResult', result, 'Listings');
+        }
+
+        async function testNotifications() {
+            if (!authToken) {
+                showResult('apiResult', { error: 'Please login first' }, 'Notifications');
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/notifications/?page=1&limit=20`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            showResult('apiResult', result, 'Notifications');
+        }
+
+        async function testProfile() {
+            if (!authToken) {
+                showResult('apiResult', { error: 'Please login first' }, 'Profile');
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/users/profile`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            showResult('apiResult', result, 'Profile');
+        }
+
+        function showResult(elementId, result, title) {
+            const resultDiv = document.getElementById(elementId);
+            const className = result.ok ? 'result success' : 'result error';
+            const status = result.ok ? '✅' : '❌';
+            
+            resultDiv.className = className;
+            resultDiv.textContent = `${status} ${title} (${result.status} ${result.statusText}):\n${JSON.stringify(result.data, null, 2)}`;
+        }
+
+        function showDebugInfo() {
+            const debugInfo = {
+                userAgent: navigator.userAgent,
+                currentURL: window.location.href,
+                localStorage: {
+                    careacquire_token: localStorage.getItem('careacquire_token'),
+                    careacquire_user: localStorage.getItem('careacquire_user')
+                },
+                cookies: document.cookie,
+                authToken: authToken ? `${authToken.substring(0, 50)}...` : 'None',
+                timestamp: new Date().toISOString()
+            };
+
+            const resultDiv = document.getElementById('debugResult');
+            resultDiv.className = 'result';
+            resultDiv.textContent = JSON.stringify(debugInfo, null, 2);
+        }
+
+        // Auto-load debug info on page load
+        window.onload = () => {
+            showDebugInfo();
+        };
+    </script>
+</body>
+</html>
