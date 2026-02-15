@@ -77,7 +77,7 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL is required")
         
         # Check if it's a valid database URL format
-        valid_prefixes = ["mysql+pymysql://", "postgresql://", "sqlite:///"]
+        valid_prefixes = ["mysql+pymysql://", "postgresql://", "postgresql+psycopg2://", "sqlite:///"]
         if not any(v.startswith(prefix) for prefix in valid_prefixes):
             raise ValueError("DATABASE_URL must start with a valid database prefix")
         

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -8,10 +6,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=mysql+pymysql://root:ruMXfGriDMZnIEKgcsAYkKUgzJlJrLQN@nozomi.proxy.rlwy.net:56420/railway
-      - DEBUG=true
-      - SECRET_KEY=dev_secret
-      - JWT_SECRET_KEY=jwt_secret
+      - DATABASE_URL=postgresql+psycopg2://postgres:vIGZUYMlHipTLnKyyyvReDPwSoDPIbYI@centerbeam.proxy.rlwy.net:27160/railway
+      - DEBUG=false
+      - SECRET_KEY=prod_secret_key_testing
+      - JWT_SECRET_KEY=prod_jwt_secret_testing
     restart: always
 
   frontend:
