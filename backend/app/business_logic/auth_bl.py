@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any
 from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import ValidationError
 from uuid import uuid4
 from decimal import Decimal
@@ -502,7 +502,7 @@ class AuthBusinessLogic:
             user_subscription, subscription_plan = subscription_query
             
             # Check if subscription is still valid based on end_date
-            current_time = datetime.now()
+            current_time = datetime.now(timezone.utc)
             is_expired = user_subscription.end_date and user_subscription.end_date < current_time
             
             # If subscription is expired, don't return it
@@ -566,7 +566,7 @@ class AuthBusinessLogic:
                 return
             
             # Calculate subscription period (1 year from now)
-            start_date = datetime.utcnow()
+            start_date = datetime.now(timezone.utc)
             end_date = start_date + timedelta(days=365)
             
             # Create user subscription
