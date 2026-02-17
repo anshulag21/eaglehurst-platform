@@ -1,7 +1,9 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Use a consistent base URL for all services
+// Note: Vite requires static access to import.meta.env for build-time replacement
 export const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
-export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${BACKEND_BASE_URL}/api/v1`;
+export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || BACKEND_BASE_URL.replace('http', 'ws') + '/ws';
 
 // Authentication
 export const TOKEN_STORAGE_KEY = 'careacquire_token';
@@ -17,13 +19,13 @@ export const ROUTES = {
   EMAIL_VERIFICATION: '/email-verification',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
-  
+
   // Dashboard Routes
   DASHBOARD: '/dashboard',
   SELLER_DASHBOARD: '/dashboard/seller',
   BUYER_DASHBOARD: '/dashboard/buyer',
   ADMIN_DASHBOARD: '/dashboard/admin',
-  
+
   // Listing Routes
   LISTINGS: '/listings',
   LISTING_DETAIL: '/listings/:id',
@@ -33,28 +35,28 @@ export const ROUTES = {
   EDIT_LISTING: '/listings/:id/edit',
   MY_LISTINGS: '/listings/my-listings',
   SAVED_LISTINGS: '/listings/saved',
-  
+
   // Profile Routes
   PROFILE: '/profile',
   PROFILE_SUBSCRIPTION: '/profile/subscription',
   KYC_UPLOAD: '/profile/kyc',
   BLOCKED_USERS: '/profile/blocked-users',
-  
+
   // Connection Routes
   CONNECTIONS: '/connections',
   ENQUIRY_HISTORY: '/enquiry-history',
   MESSAGES: '/messages',
   MESSAGE_THREAD: '/messages/:connectionId',
-  
+
   // Subscription Routes
   SUBSCRIPTIONS: '/subscriptions',
   SUBSCRIPTION_SUCCESS: '/subscriptions/success',
   SUBSCRIPTION_CANCEL: '/subscriptions/cancel',
-  
+
   // Service Routes
   SERVICES: '/services',
   SERVICE_REQUEST: '/services/request',
-  
+
   // Admin Routes
   ADMIN_USERS: '/admin/users',
   ADMIN_BUYERS: '/admin/buyers',
@@ -256,17 +258,17 @@ export const WS_EVENTS = {
 // Utility Functions
 export const getImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
-  
+
   // If it's already a full URL, return as is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
   }
-  
+
   // If it starts with /, it's a relative path from backend
   if (imagePath.startsWith('/')) {
     return `${BACKEND_BASE_URL}${imagePath}`;
   }
-  
+
   // Otherwise, assume it's a relative path and prepend backend URL
   return `${BACKEND_BASE_URL}/${imagePath}`;
 };

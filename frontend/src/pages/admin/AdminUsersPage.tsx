@@ -49,6 +49,7 @@ import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 
 import { adminService } from '../../services/admin.service';
+import { BACKEND_BASE_URL } from '../../constants';
 
 interface User {
   id: string;
@@ -120,20 +121,20 @@ const AdminUsersPage: React.FC = () => {
 
       if (response.success && response.data) {
         let users = response.data.users || [];
-        
+
         // Apply frontend filters
         if (filterAccountStatus !== 'all') {
-          users = users.filter((user: User) => 
+          users = users.filter((user: User) =>
             filterAccountStatus === 'active' ? user.is_active : !user.is_active
           );
         }
-        
+
         if (filterEmailVerified !== 'all') {
-          users = users.filter((user: User) => 
+          users = users.filter((user: User) =>
             filterEmailVerified === 'verified' ? user.is_verified : !user.is_verified
           );
         }
-        
+
         setUsers(users);
         setTotalUsers(users.length);
       } else {
@@ -249,7 +250,7 @@ const AdminUsersPage: React.FC = () => {
 
     try {
       let response;
-      
+
       switch (actionType) {
         case 'approve':
           response = await adminService.verifyUser(selectedUser.id, {
@@ -332,12 +333,12 @@ const AdminUsersPage: React.FC = () => {
 
   const getVerificationStatus = (user: User): 'pending' | 'submitted_for_review' | 'approved' | 'rejected' => {
     if (user.user_type === 'admin') return 'approved';
-    
+
     // For sellers, use seller-specific verification status
     if (user.user_type === 'seller' && user.seller_info) {
       return user.seller_info.verification_status;
     }
-    
+
     // For buyers and others, use email verification status
     return user.is_verified ? 'approved' : 'pending';
   };
@@ -399,7 +400,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -417,7 +418,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -435,7 +436,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -453,7 +454,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
@@ -471,7 +472,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
@@ -489,7 +490,7 @@ const AdminUsersPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
@@ -526,7 +527,7 @@ const AdminUsersPage: React.FC = () => {
                 }}
                 sx={{ minWidth: 300 }}
               />
-              
+
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>User Type</InputLabel>
                 <Select
@@ -540,7 +541,7 @@ const AdminUsersPage: React.FC = () => {
                   <MenuItem value="admin">Admins</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>Verification</InputLabel>
                 <Select
@@ -555,7 +556,7 @@ const AdminUsersPage: React.FC = () => {
                   <MenuItem value="rejected">Rejected</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>Account</InputLabel>
                 <Select
@@ -568,7 +569,7 @@ const AdminUsersPage: React.FC = () => {
                   <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>Email</InputLabel>
                 <Select
@@ -633,123 +634,123 @@ const AdminUsersPage: React.FC = () => {
                   </TableRow>
                 ) : (
                   displayedUsers.map((user) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={2}>
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                          {user.first_name[0]}{user.last_name[0]}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            {user.first_name} {user.last_name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Chip
-                        icon={getUserTypeIcon(user.user_type)}
-                        label={user.user_type}
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Typography variant="body2">
-                        {getContactInfo(user)}
-                      </Typography>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Chip
-                        label={getVerificationStatus(user) === 'submitted_for_review' ? 'Under Review' : getVerificationStatus(user)}
-                        color={getStatusColor(getVerificationStatus(user)) as 'success' | 'warning' | 'error' | 'info' | 'default'}
-                        size="small"
-                      />
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        {user.user_type === 'seller' && user.seller_info && (
-                          <Chip
-                            label={`${user.seller_info.listings_count} listings`}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
-                        )}
-                        {user.user_type === 'buyer' && user.buyer_info && (
-                          <Chip
-                            label={`${user.buyer_info.connections_count} connections`}
-                            size="small"
-                            color="secondary"
-                            variant="outlined"
-                          />
-                        )}
-                        {user.user_type === 'admin' && (
-                          <Chip
-                            label="Admin"
-                            size="small"
-                            color="default"
-                            variant="outlined"
-                          />
-                        )}
-                      </Stack>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Chip
-                        label={user.is_active ? 'Active' : 'Blocked'}
-                        color={user.is_active ? 'success' : 'error'}
-                        size="small"
-                        variant={user.is_active ? 'outlined' : 'filled'}
-                      />
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Typography variant="body2">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </TableCell>
-                    
-                    <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
-                        <Button
-                          size="small"
+                    <TableRow key={user.id} hover>
+                      <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            {user.first_name[0]}{user.last_name[0]}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              {user.first_name} {user.last_name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {user.email}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          icon={getUserTypeIcon(user.user_type)}
+                          label={user.user_type}
                           variant="outlined"
-                          startIcon={<Visibility />}
-                          onClick={() => handleViewUser(user)}
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          Details
-                        </Button>
-                        <IconButton
                           size="small"
-                          onClick={(e) => handleMenuOpen(e, user)}
-                          sx={{ 
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            '&:hover': {
-                              backgroundColor: 'action.hover'
-                            }
-                          }}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <Typography variant="body2">
+                          {getContactInfo(user)}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          label={getVerificationStatus(user) === 'submitted_for_review' ? 'Under Review' : getVerificationStatus(user)}
+                          color={getStatusColor(getVerificationStatus(user)) as 'success' | 'warning' | 'error' | 'info' | 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {user.user_type === 'seller' && user.seller_info && (
+                            <Chip
+                              label={`${user.seller_info.listings_count} listings`}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          )}
+                          {user.user_type === 'buyer' && user.buyer_info && (
+                            <Chip
+                              label={`${user.buyer_info.connections_count} connections`}
+                              size="small"
+                              color="secondary"
+                              variant="outlined"
+                            />
+                          )}
+                          {user.user_type === 'admin' && (
+                            <Chip
+                              label="Admin"
+                              size="small"
+                              color="default"
+                              variant="outlined"
+                            />
+                          )}
+                        </Stack>
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          label={user.is_active ? 'Active' : 'Blocked'}
+                          color={user.is_active ? 'success' : 'error'}
+                          size="small"
+                          variant={user.is_active ? 'outlined' : 'filled'}
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <Typography variant="body2">
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<Visibility />}
+                            onClick={() => handleViewUser(user)}
+                            sx={{ fontSize: '0.75rem' }}
+                          >
+                            Details
+                          </Button>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, user)}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              '&:hover': {
+                                backgroundColor: 'action.hover'
+                              }
+                            }}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </TableContainer>
-          
+
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
@@ -851,7 +852,7 @@ const AdminUsersPage: React.FC = () => {
                       </Box>
                     </Stack>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <Typography variant="h6" gutterBottom>
                       Account Status
@@ -962,9 +963,9 @@ const AdminUsersPage: React.FC = () => {
                                 <Typography variant="subtitle2" color="text.secondary">
                                   Admin Notes
                                 </Typography>
-                                <Typography variant="body2" sx={{ 
-                                  bgcolor: 'grey.100', 
-                                  p: 1, 
+                                <Typography variant="body2" sx={{
+                                  bgcolor: 'grey.100',
+                                  p: 1,
                                   borderRadius: 1,
                                   fontStyle: 'italic'
                                 }}>
@@ -975,7 +976,7 @@ const AdminUsersPage: React.FC = () => {
                           </Stack>
                         </Grid>
                       </Grid>
-                      
+
                       {/* KYC Documents */}
                       {viewingUser.seller_info.kyc_documents && viewingUser.seller_info.kyc_documents.length > 0 && (
                         <Box sx={{ mt: 3 }}>
@@ -1026,14 +1027,14 @@ const AdminUsersPage: React.FC = () => {
                                       {listing.description}
                                     </Typography>
                                   </Box>
-                                  
+
                                   <Stack direction="row" spacing={1} flexWrap="wrap">
                                     <Chip
                                       label={listing.status}
                                       color={
                                         listing.status === 'published' ? 'success' :
-                                        listing.status === 'pending_approval' ? 'warning' :
-                                        listing.status === 'draft' ? 'default' : 'error'
+                                          listing.status === 'pending_approval' ? 'warning' :
+                                            listing.status === 'draft' ? 'default' : 'error'
                                       }
                                       size="small"
                                     />
@@ -1043,7 +1044,7 @@ const AdminUsersPage: React.FC = () => {
                                       size="small"
                                     />
                                   </Stack>
-                                  
+
                                   <Grid container spacing={1}>
                                     <Grid item xs={6}>
                                       <Typography variant="caption" color="text.secondary">
@@ -1062,7 +1063,7 @@ const AdminUsersPage: React.FC = () => {
                                       </Typography>
                                     </Grid>
                                   </Grid>
-                                  
+
                                   {listing.asking_price && (
                                     <Box>
                                       <Typography variant="caption" color="text.secondary">
@@ -1073,7 +1074,7 @@ const AdminUsersPage: React.FC = () => {
                                       </Typography>
                                     </Box>
                                   )}
-                                  
+
                                   <Stack direction="row" spacing={2} sx={{ fontSize: '0.875rem' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                       <Visibility sx={{ fontSize: 16 }} />
@@ -1141,8 +1142,8 @@ const AdminUsersPage: React.FC = () => {
                                 Connection Success Rate
                               </Typography>
                               <Typography variant="body1">
-                                {viewingUser.buyer_info.connections_count > 0 ? 
-                                  `${Math.round((viewingUser.buyer_info.connections_count / Math.max(viewingUser.buyer_info.connections_count * 1.2, 1)) * 100)}%` : 
+                                {viewingUser.buyer_info.connections_count > 0 ?
+                                  `${Math.round((viewingUser.buyer_info.connections_count / Math.max(viewingUser.buyer_info.connections_count * 1.2, 1)) * 100)}%` :
                                   'No data'
                                 }
                               </Typography>
@@ -1257,10 +1258,10 @@ const AdminUsersPage: React.FC = () => {
                             <Card variant="outlined">
                               <CardContent>
                                 <Typography variant="subtitle2" gutterBottom>
-                                  {doc.document_type === 'identity_document' ? 'Identity Document' : 
-                                   doc.document_type === 'license_document' ? 'Medical License' : 
-                                   doc.document_type === 'additional' ? 'Additional Document' :
-                                   'Document'}
+                                  {doc.document_type === 'identity_document' ? 'Identity Document' :
+                                    doc.document_type === 'license_document' ? 'Medical License' :
+                                      doc.document_type === 'additional' ? 'Additional Document' :
+                                        'Document'}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" gutterBottom>
                                   {doc.original_filename || doc.filename}
@@ -1272,7 +1273,7 @@ const AdminUsersPage: React.FC = () => {
                                   <Button
                                     size="small"
                                     variant="outlined"
-                                    onClick={() => window.open(`http://localhost:8000/${doc.file_path}`, '_blank')}
+                                    onClick={() => window.open(`${BACKEND_BASE_URL}/${doc.file_path}`, '_blank')}
                                   >
                                     View Document
                                   </Button>
@@ -1356,10 +1357,10 @@ const AdminUsersPage: React.FC = () => {
                 <Visibility sx={{ mr: 1 }} />
                 View Details
               </MenuItem>
-              
+
               {/* KYC Review option for sellers with submitted documents */}
               {selectedMenuUser.user_type === 'seller' && getVerificationStatus(selectedMenuUser) === 'submitted_for_review' && (
-                <MenuItem 
+                <MenuItem
                   onClick={() => handleKycReview(selectedMenuUser)}
                   sx={{ color: 'primary.main' }}
                 >
@@ -1367,17 +1368,17 @@ const AdminUsersPage: React.FC = () => {
                   Review KYC
                 </MenuItem>
               )}
-              
+
               {getVerificationStatus(selectedMenuUser) === 'pending' && (
                 <>
-                  <MenuItem 
+                  <MenuItem
                     onClick={() => handleUserAction(selectedMenuUser, 'approve')}
                     sx={{ color: 'success.main' }}
                   >
                     <CheckCircle sx={{ mr: 1 }} />
                     Approve User
                   </MenuItem>
-                  <MenuItem 
+                  <MenuItem
                     onClick={() => handleUserAction(selectedMenuUser, 'reject')}
                     sx={{ color: 'error.main' }}
                   >
@@ -1386,9 +1387,9 @@ const AdminUsersPage: React.FC = () => {
                   </MenuItem>
                 </>
               )}
-              
+
               {selectedMenuUser.is_active ? (
-                <MenuItem 
+                <MenuItem
                   onClick={() => handleUserAction(selectedMenuUser, 'block')}
                   sx={{ color: 'warning.main' }}
                 >
@@ -1396,7 +1397,7 @@ const AdminUsersPage: React.FC = () => {
                   Block User
                 </MenuItem>
               ) : (
-                <MenuItem 
+                <MenuItem
                   onClick={() => handleUserAction(selectedMenuUser, 'unblock')}
                   sx={{ color: 'success.main' }}
                 >

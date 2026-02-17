@@ -33,7 +33,7 @@ class User(Base):
     buyer_profile = relationship("Buyer", back_populates="user", uselist=False)
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
     service_requests = relationship("ServiceRequest", foreign_keys="ServiceRequest.user_id", back_populates="user")
-    assigned_service_requests = relationship("ServiceRequest", foreign_keys="ServiceRequest.admin_assigned_id")
+    assigned_service_requests = relationship("ServiceRequest", foreign_keys="ServiceRequest.admin_assigned_id", back_populates="admin_assigned")
     
     # Blocking relationships
     blocks_made = relationship("UserBlock", foreign_keys="UserBlock.blocker_id", back_populates="blocker")

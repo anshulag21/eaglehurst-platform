@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BACKEND_BASE_URL } from '../../constants';
 import {
   Container,
   Typography,
@@ -33,7 +34,6 @@ import {
   LocationOn,
   CalendarToday,
   Visibility,
-  Edit,
   CheckCircle,
   Schedule,
   Cancel,
@@ -132,18 +132,18 @@ const AdminSellerDetailPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get seller details
       const response = await adminService.getUserDetails(sellerId!);
-      
+
       if (response.success && response.data) {
         const sellerData = response.data;
-        
+
         // Get seller's listings using admin endpoint
         try {
           // Try multiple endpoints to get seller's listings
           let listingsResponse;
-          
+
           // Try to get seller listings using the seller's business name as search term
           try {
             listingsResponse = await adminService.getSellerListings(sellerId!);
@@ -155,7 +155,7 @@ const AdminSellerDetailPage: React.FC = () => {
               data: { listings: [] }
             };
           }
-          
+
           if (listingsResponse && listingsResponse.success && listingsResponse.data) {
             // Handle different response structures
             let listings = [];
@@ -166,13 +166,13 @@ const AdminSellerDetailPage: React.FC = () => {
             } else if (listingsResponse.data.data) {
               listings = listingsResponse.data.data;
             }
-            
+
             // Transform listings and fetch analytics data from regular listing endpoints
             const listingsWithAnalytics = await Promise.all(
               listings.map(async (listing: any, index: number) => {
                 let viewCount = listing.view_count ?? null;
                 let connectionCount = listing.connection_count ?? null;
-                
+
                 // Try to get analytics data from regular listing endpoint
                 try {
                   const analyticsResponse = await adminService.getListingAnalytics(listing.id);
@@ -183,7 +183,7 @@ const AdminSellerDetailPage: React.FC = () => {
                 } catch (error) {
                   console.log(`Could not fetch analytics for listing ${listing.id}:`, error);
                 }
-                
+
                 return {
                   id: listing.id,
                   title: listing.title || `Untitled Listing ${index + 1}`,
@@ -198,7 +198,7 @@ const AdminSellerDetailPage: React.FC = () => {
                 };
               })
             );
-            
+
             sellerData.listings = listingsWithAnalytics;
           } else {
             console.warn('No listings data found for seller');
@@ -212,32 +212,32 @@ const AdminSellerDetailPage: React.FC = () => {
 
         // Calculate comprehensive statistics from real data
         const listings = sellerData.listings || [];
-        const totalViews = listings.reduce((sum, l) => sum + (l.view_count ?? 0), 0);
-        const totalConnections = listings.reduce((sum, l) => sum + (l.connection_count ?? 0), 0);
-        
+        const totalViews = listings.reduce((sum: number, l: any) => sum + (l.view_count ?? 0), 0);
+        const totalConnections = listings.reduce((sum: number, l: any) => sum + (l.connection_count ?? 0), 0);
+
         // Check if we have any real analytics data
-        const hasAnalyticsData = listings.some(l => l.view_count !== null || l.connection_count !== null);
-        
+        const hasAnalyticsData = listings.some((l: any) => l.view_count !== null || l.connection_count !== null);
+
         // Add analytics availability info to seller data
         sellerData.hasAnalyticsData = hasAnalyticsData;
-        
+
         // Calculate metrics using only real data
-        const publishedListings = listings.filter(l => l.status === 'published').length;
-        const pendingListings = listings.filter(l => l.status === 'pending' || l.status === 'pending_approval').length;
-        const draftListings = listings.filter(l => l.status === 'draft').length;
-        
+        const publishedListings = listings.filter((l: any) => l.status === 'published').length;
+        const pendingListings = listings.filter((l: any) => l.status === 'pending' || l.status === 'pending_approval').length;
+        const draftListings = listings.filter((l: any) => l.status === 'draft').length;
+
         // Calculate seller performance metrics from real data only
         const avgViewsPerListing = listings.length > 0 ? Math.floor(totalViews / listings.length) : 0;
         const conversionRate = totalViews > 0 ? ((totalConnections / totalViews) * 100) : 0;
-        
+
         // Calculate connection statistics from available data
         let activeConnections = totalConnections;
         let totalMessages = 0;
-        
+
         // For now, estimate active connections as a percentage of total connections
         // This will be replaced when proper admin connection endpoints are available
         activeConnections = Math.floor(totalConnections * 0.7); // Assume 70% are active
-        
+
         sellerData.statistics = {
           total_listings: listings.length,
           published_listings: publishedListings,
@@ -360,9 +360,9 @@ const AdminSellerDetailPage: React.FC = () => {
                 <strong>Step 3:</strong> Populate analytics data in database (view_count, connection_count)
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button 
-                  variant="outlined" 
-                  size="small" 
+                <Button
+                  variant="outlined"
+                  size="small"
                   onClick={() => {
                     console.log('Current token:', localStorage.getItem('token'));
                     console.log('Token exists:', !!localStorage.getItem('token'));
@@ -370,14 +370,13 @@ const AdminSellerDetailPage: React.FC = () => {
                 >
                   Check Auth Status
                 </Button>
-                <Button 
-                  variant="outlined" 
-                  size="small" 
+                <Button
+                  variant="outlined"
+                  size="small"
                   onClick={() => {
                     const listingId = seller.listings?.[0]?.id;
                     if (listingId) {
-                      console.log(`Testing endpoint: /listings/${listingId}/analytics`);
-                      window.open(`http://localhost:8000/api/v1/listings/${listingId}/analytics`, '_blank');
+                      window.open(`${BACKEND_BASE_URL}/api/v1/listings/${listingId}/analytics`, '_blank');
                     }
                   }}
                   disabled={!seller.listings?.[0]?.id}
@@ -422,7 +421,7 @@ const AdminSellerDetailPage: React.FC = () => {
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Assessment sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
                     <Typography variant="h4" color="info.main">
-                      {seller.statistics?.published_listings ? 
+                      {seller.statistics?.published_listings ?
                         ((seller.statistics.published_listings / seller.statistics.total_listings) * 100).toFixed(0) : '0'}%
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -466,12 +465,15 @@ const AdminSellerDetailPage: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {seller.listings?.map((listing) => {
-                      const conversionRate = (listing.view_count !== null && listing.view_count > 0) ? 
-                        (((listing.connection_count || 0) / listing.view_count) * 100) : null;
-                      const performanceScore = (listing.view_count !== null && listing.connection_count !== null) ?
-                        Math.min(((listing.view_count) * 0.3) + ((listing.connection_count) * 0.7), 100) : null;
-                      
+                    {seller.listings?.map((listing: any) => {
+                      const viewCount = listing.view_count ?? 0;
+                      const connectionCount = listing.connection_count ?? 0;
+
+                      const conversionRate = (viewCount > 0) ?
+                        ((connectionCount / viewCount) * 100) : null;
+                      const performanceScore = (viewCount > 0 || connectionCount > 0) ?
+                        Math.min((viewCount * 0.3) + (connectionCount * 0.7), 100) : null;
+
                       return (
                         <TableRow key={listing.id}>
                           <TableCell>
@@ -501,8 +503,8 @@ const AdminSellerDetailPage: React.FC = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography 
-                              variant="body2" 
+                            <Typography
+                              variant="body2"
                               color={conversionRate !== null ? (conversionRate > 5 ? 'success.main' : conversionRate > 2 ? 'warning.main' : 'error.main') : 'text.secondary'}
                               fontWeight="medium"
                             >
@@ -524,9 +526,9 @@ const AdminSellerDetailPage: React.FC = () => {
                                   sx={{
                                     width: performanceScore !== null ? `${Math.min(performanceScore, 100)}%` : '0%',
                                     height: '100%',
-                                    bgcolor: performanceScore !== null ? 
-                                      (performanceScore > 70 ? 'success.main' : 
-                                       performanceScore > 40 ? 'warning.main' : 'error.main') : 'grey.300',
+                                    bgcolor: performanceScore !== null ?
+                                      (performanceScore > 70 ? 'success.main' :
+                                        performanceScore > 40 ? 'warning.main' : 'error.main') : 'grey.300',
                                   }}
                                 />
                               </Box>
@@ -649,304 +651,304 @@ const AdminSellerDetailPage: React.FC = () => {
           <Grid container spacing={3}>
             {/* Seller Profile */}
             <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Box sx={{ textAlign: 'center', mb: 3 }}>
-                  <Avatar
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      bgcolor: 'primary.main',
-                      fontSize: '2rem',
-                      mx: 'auto',
-                      mb: 2
-                    }}
-                  >
-                    {seller.first_name.charAt(0)}{seller.last_name.charAt(0)}
-                  </Avatar>
-                  <Typography variant="h5" gutterBottom>
-                    {seller.first_name} {seller.last_name}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" gutterBottom>
-                    {seller.seller_profile.business_name}
-                  </Typography>
-                  <Stack direction="row" spacing={1} justifyContent="center">
-                    <Chip
-                      label={seller.is_active ? 'Active' : 'Inactive'}
-                      color={seller.is_active ? 'success' : 'error'}
-                      size="small"
-                    />
-                    <Chip
-                      icon={getStatusIcon(seller.seller_profile.verification_status)}
-                      label={seller.seller_profile.verification_status.replace('_', ' ').toUpperCase()}
-                      color={getStatusColor(seller.seller_profile.verification_status) as any}
-                      size="small"
-                    />
+              <Card>
+                <CardContent>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <Avatar
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: 'primary.main',
+                        fontSize: '2rem',
+                        mx: 'auto',
+                        mb: 2
+                      }}
+                    >
+                      {seller.first_name.charAt(0)}{seller.last_name.charAt(0)}
+                    </Avatar>
+                    <Typography variant="h5" gutterBottom>
+                      {seller.first_name} {seller.last_name}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                      {seller.seller_profile.business_name}
+                    </Typography>
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <Chip
+                        label={seller.is_active ? 'Active' : 'Inactive'}
+                        color={seller.is_active ? 'success' : 'error'}
+                        size="small"
+                      />
+                      <Chip
+                        icon={getStatusIcon(seller.seller_profile.verification_status)}
+                        label={seller.seller_profile.verification_status.replace('_', ' ').toUpperCase()}
+                        color={getStatusColor(seller.seller_profile.verification_status) as any}
+                        size="small"
+                      />
+                    </Stack>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Email color="action" />
+                      <Typography variant="body2">{seller.email}</Typography>
+                    </Box>
+                    {seller.phone && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Phone color="action" />
+                        <Typography variant="body2">{seller.phone}</Typography>
+                      </Box>
+                    )}
+                    {seller.seller_profile.business_address && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocationOn color="action" />
+                        <Typography variant="body2">{seller.seller_profile.business_address}</Typography>
+                      </Box>
+                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarToday color="action" />
+                      <Typography variant="body2">
+                        Joined {formatDate(seller.created_at)}
+                      </Typography>
+                    </Box>
+                    {seller.last_login && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Schedule color="action" />
+                        <Typography variant="body2">
+                          Last login {formatDate(seller.last_login)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Stack>
-                </Box>
 
-                <Divider sx={{ my: 2 }} />
-
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Email color="action" />
-                    <Typography variant="body2">{seller.email}</Typography>
-                  </Box>
-                  {seller.phone && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Phone color="action" />
-                      <Typography variant="body2">{seller.phone}</Typography>
-                    </Box>
-                  )}
-                  {seller.seller_profile.business_address && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <LocationOn color="action" />
-                      <Typography variant="body2">{seller.seller_profile.business_address}</Typography>
-                    </Box>
-                  )}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarToday color="action" />
-                    <Typography variant="body2">
-                      Joined {formatDate(seller.created_at)}
-                    </Typography>
-                  </Box>
-                  {seller.last_login && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Schedule color="action" />
-                      <Typography variant="body2">
-                        Last login {formatDate(seller.last_login)}
+                  {seller.seller_profile.business_description && (
+                    <>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography variant="subtitle2" gutterBottom>
+                        Business Description
                       </Typography>
-                    </Box>
-                  )}
-                </Stack>
-
-                {seller.seller_profile.business_description && (
-                  <>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="subtitle2" gutterBottom>
-                      Business Description
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {seller.seller_profile.business_description}
-                    </Typography>
-                  </>
-                )}
-
-                {seller.seller_profile.admin_notes && (
-                  <>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="subtitle2" gutterBottom>
-                      Admin Notes
-                    </Typography>
-                    <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                      <Typography variant="body2">
-                        {seller.seller_profile.admin_notes}
+                      <Typography variant="body2" color="text.secondary">
+                        {seller.seller_profile.business_description}
                       </Typography>
-                    </Paper>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+                    </>
+                  )}
 
-          {/* Statistics and Listings */}
-          <Grid item xs={12} md={8}>
-            {/* Statistics Cards */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6} sm={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Business sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="h4" color="primary">
-                      {seller.statistics?.total_listings || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Listings
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Visibility sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
-                    <Typography variant="h4" color="info.main">
-                      {seller.statistics?.total_views || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Views
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <ConnectWithoutContact sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
-                    <Typography variant="h4" color="success.main">
-                      {seller.statistics?.total_connections || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Connections
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <CheckCircle sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
-                    <Typography variant="h4" color="warning.main">
-                      {seller.statistics?.published_listings || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Published
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                  {seller.seller_profile.admin_notes && (
+                    <>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography variant="subtitle2" gutterBottom>
+                        Admin Notes
+                      </Typography>
+                      <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                        <Typography variant="body2">
+                          {seller.seller_profile.admin_notes}
+                        </Typography>
+                      </Paper>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </Grid>
 
-            {/* Listings Table */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Seller's Listings
-                </Typography>
-                {!seller.hasAnalyticsData && (
-                  <Alert severity="warning" sx={{ mb: 2 }}>
-                    <Typography variant="body2">
-                      <strong>Note:</strong> View counts and connections show "N/A" due to backend permission restrictions. 
-                      Admin users cannot access <code>/listings/&#123;id&#125;/analytics</code> (403 Forbidden).
-                    </Typography>
-                  </Alert>
-                )}
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Listing</TableCell>
-                        <TableCell>Business Type</TableCell>
-                        <TableCell>Price</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Views</TableCell>
-                        <TableCell>Connections</TableCell>
-                        <TableCell>Created</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {seller.listings?.map((listing) => (
-                        <TableRow key={listing.id} hover>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              {listing.media_files?.find(m => m.is_primary) && (
-                                <Box
-                                  component="img"
-                                  src={listing.media_files.find(m => m.is_primary)?.file_url}
-                                  alt={listing.title}
-                                  sx={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 1,
-                                    objectFit: 'cover'
-                                  }}
-                                />
-                              )}
-                              <Box>
-                                <Typography variant="subtitle2">
-                                  {listing.title}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {listing.location}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={listing.business_type ? listing.business_type.replace('_', ' ').toUpperCase() : 'N/A'}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              {formatPrice(listing.asking_price)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={getStatusIcon(listing.status || 'pending')}
-                              label={listing.status ? listing.status.toUpperCase() : 'PENDING'}
-                              color={getStatusColor(listing.status || 'pending') as any}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {listing.view_count !== null ? listing.view_count : 'N/A'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {listing.connection_count !== null ? listing.connection_count : 'N/A'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {formatDate(listing.created_at)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Stack direction="row" spacing={1}>
-                              <Tooltip title="View Conversations">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleViewListing(listing.id)}
-                                  color="primary"
-                                >
-                                  <Message fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="View Listing">
-                                <IconButton 
-                                  size="small" 
-                                  color="info"
-                                  onClick={() => handleViewListingDetail(listing.id)}
-                                >
-                                  <Visibility fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Analytics">
-                                <IconButton 
-                                  size="small" 
-                                  color="success"
-                                  onClick={() => handleViewListingAnalytics(listing.id)}
-                                >
-                                  <Assessment fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {(!seller.listings || seller.listings.length === 0) && (
+            {/* Statistics and Listings */}
+            <Grid item xs={12} md={8}>
+              {/* Statistics Cards */}
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={6} sm={3}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Business sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
+                      <Typography variant="h4" color="primary">
+                        {seller.statistics?.total_listings || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Listings
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <Visibility sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
+                      <Typography variant="h4" color="info.main">
+                        {seller.statistics?.total_views || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Views
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <ConnectWithoutContact sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
+                      <Typography variant="h4" color="success.main">
+                        {seller.statistics?.total_connections || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Connections
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Card>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <CheckCircle sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
+                      <Typography variant="h4" color="warning.main">
+                        {seller.statistics?.published_listings || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Published
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Listings Table */}
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Seller's Listings
+                  </Typography>
+                  {!seller.hasAnalyticsData && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        <strong>Note:</strong> View counts and connections show "N/A" due to backend permission restrictions.
+                        Admin users cannot access <code>/listings/&#123;id&#125;/analytics</code> (403 Forbidden).
+                      </Typography>
+                    </Alert>
+                  )}
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              No listings found
-                            </Typography>
-                          </TableCell>
+                          <TableCell>Listing</TableCell>
+                          <TableCell>Business Type</TableCell>
+                          <TableCell>Price</TableCell>
+                          <TableCell>Status</TableCell>
+                          <TableCell>Views</TableCell>
+                          <TableCell>Connections</TableCell>
+                          <TableCell>Created</TableCell>
+                          <TableCell>Actions</TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
+                      </TableHead>
+                      <TableBody>
+                        {seller.listings?.map((listing) => (
+                          <TableRow key={listing.id} hover>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                {listing.media_files?.find(m => m.is_primary) && (
+                                  <Box
+                                    component="img"
+                                    src={listing.media_files.find(m => m.is_primary)?.file_url}
+                                    alt={listing.title}
+                                    sx={{
+                                      width: 40,
+                                      height: 40,
+                                      borderRadius: 1,
+                                      objectFit: 'cover'
+                                    }}
+                                  />
+                                )}
+                                <Box>
+                                  <Typography variant="subtitle2">
+                                    {listing.title}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {listing.location}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={listing.business_type ? listing.business_type.replace('_', ' ').toUpperCase() : 'N/A'}
+                                size="small"
+                                variant="outlined"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight="medium">
+                                {formatPrice(listing.asking_price)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                icon={getStatusIcon(listing.status || 'pending')}
+                                label={listing.status ? listing.status.toUpperCase() : 'PENDING'}
+                                color={getStatusColor(listing.status || 'pending') as any}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {listing.view_count !== null ? listing.view_count : 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {listing.connection_count !== null ? listing.connection_count : 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {formatDate(listing.created_at)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Stack direction="row" spacing={1}>
+                                <Tooltip title="View Conversations">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleViewListing(listing.id)}
+                                    color="primary"
+                                  >
+                                    <Message fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="View Listing">
+                                  <IconButton
+                                    size="small"
+                                    color="info"
+                                    onClick={() => handleViewListingDetail(listing.id)}
+                                  >
+                                    <Visibility fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Analytics">
+                                  <IconButton
+                                    size="small"
+                                    color="success"
+                                    onClick={() => handleViewListingAnalytics(listing.id)}
+                                  >
+                                    <Assessment fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!seller.listings || seller.listings.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                No listings found
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-        </Grid>
         )}
 
         {activeTab === 1 && renderAnalyticsTab()}

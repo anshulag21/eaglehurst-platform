@@ -51,7 +51,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { listingService } from '../../services/listing.service';
 import { analyticsService } from '../../services/analytics.service';
 import { connectionService } from '../../services/connection.service';
-import { ROUTES } from '../../constants';
+import { ROUTES, BACKEND_BASE_URL } from '../../constants';
 import type { Listing } from '../../types';
 import { useAppSelector } from '../../store';
 import toast from 'react-hot-toast';
@@ -119,34 +119,34 @@ const SellerListingDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
-  
+
   const [listing, setListing] = useState<Listing | null>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
-  
+
   // Dialog states
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [selectedBuyer, setSelectedBuyer] = useState<any>(null);
   const [connectionMessage, setConnectionMessage] = useState('');
   const [sendingConnection, setSendingConnection] = useState(false);
-  
+
   // Connection management states
   const [connectionStatusDialog, setConnectionStatusDialog] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<any>(null);
   const [responseMessage, setResponseMessage] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  
+
   // Viewer connection states
-  const [viewerConnectionStatuses, setViewerConnectionStatuses] = useState<{[key: string]: any}>({});
-  const [loadingViewerStatuses, setLoadingViewerStatuses] = useState<{[key: string]: boolean}>({});
-  
+  const [viewerConnectionStatuses, setViewerConnectionStatuses] = useState<{ [key: string]: any }>({});
+  const [loadingViewerStatuses, setLoadingViewerStatuses] = useState<{ [key: string]: boolean }>({});
+
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  
+
   // Pending changes state
   const [pendingChanges, setPendingChanges] = useState<any>(null);
   const [loadingPendingChanges, setLoadingPendingChanges] = useState(false);
@@ -171,7 +171,7 @@ const SellerListingDetailPage: React.FC = () => {
 
   const loadPendingChanges = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       setLoadingPendingChanges(true);
       const response = await listingService.getPendingChanges(id);
@@ -209,8 +209,8 @@ const SellerListingDetailPage: React.FC = () => {
   const loadViewerConnectionStatuses = useCallback(async () => {
     if (!analytics?.viewers) return;
 
-    const statuses: {[key: string]: any} = {};
-    const loading: {[key: string]: boolean} = {};
+    const statuses: { [key: string]: any } = {};
+    const loading: { [key: string]: boolean } = {};
 
     for (const viewer of analytics.viewers) {
       // Skip viewers without valid buyer_id
@@ -255,7 +255,7 @@ const SellerListingDetailPage: React.FC = () => {
     // Check if URL has ?view=changes parameter
     const urlParams = new URLSearchParams(window.location.search);
     const viewParam = urlParams.get('view');
-    
+
     if (viewParam === 'changes' && listing?.has_pending_edit) {
       setShowPendingChanges(true);
       loadPendingChanges();
@@ -285,7 +285,7 @@ const SellerListingDetailPage: React.FC = () => {
 
     if (connectionStatus?.has_connection) {
       const status = connectionStatus.status;
-      
+
       if (status === 'pending') {
         return (
           <Button
@@ -347,16 +347,16 @@ const SellerListingDetailPage: React.FC = () => {
 
     try {
       setSendingConnection(true);
-      const response = await connectionService.sendSellerToBuyerConnection(
-        selectedBuyer.buyer_id,
-        connectionMessage
-      );
+      const response = await connectionService.sendSellerToBuyerConnection({
+        buyer_id: selectedBuyer.buyer_id,
+        message: connectionMessage
+      });
 
       if (response.success) {
         toast.success('Connection request sent successfully!');
         setConnectDialogOpen(false);
         setConnectionMessage('');
-        
+
         // Update the connection status for this viewer
         setViewerConnectionStatuses(prev => ({
           ...prev,
@@ -368,7 +368,7 @@ const SellerListingDetailPage: React.FC = () => {
             reason: 'Connection request sent'
           }
         }));
-        
+
         setSelectedBuyer(null);
         loadAnalytics(); // Refresh analytics
       } else {
@@ -428,7 +428,7 @@ const SellerListingDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!listing) return;
-    
+
     try {
       setDeleting(true);
       const response = await listingService.deleteListing(listing.id);
@@ -449,7 +449,7 @@ const SellerListingDetailPage: React.FC = () => {
 
   const handlePublish = async () => {
     if (!listing) return;
-    
+
     try {
       const response = await listingService.updateListing(listing.id, { is_draft: false });
       if (response.success) {
@@ -503,12 +503,12 @@ const SellerListingDetailPage: React.FC = () => {
   // Helper function to format dates safely
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not available';
-    
+
     try {
       const date = new Date(dateString);
       // Check if date is valid
       if (isNaN(date.getTime())) return 'Not available';
-      
+
       return date.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
@@ -522,7 +522,7 @@ const SellerListingDetailPage: React.FC = () => {
   // Helper function to get full image URL
   const getImageUrl = (url: string): string => {
     if (url.startsWith('http')) return url;
-    return `http://localhost:8000${url}`;
+    return `${BACKEND_BASE_URL}${url}`;
   };
 
   // Helper function to format values for display
@@ -530,7 +530,7 @@ const SellerListingDetailPage: React.FC = () => {
     if (value === null || value === undefined) {
       return 'Not set';
     }
-    
+
     if (typeof value === 'object') {
       // Handle objects by showing key-value pairs
       if (Array.isArray(value)) {
@@ -538,25 +538,25 @@ const SellerListingDetailPage: React.FC = () => {
       } else {
         const entries = Object.entries(value);
         if (entries.length === 0) return 'Empty object';
-        
+
         return entries
           .map(([key, val]) => `${key}: ${val}`)
           .join(', ');
       }
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
-    
+
     return String(value);
   };
 
   // Helper function to check if a field has pending changes
   const getFieldChange = (fieldPath: string) => {
     if (!pendingChanges?.changes) return null;
-    
-    return pendingChanges.changes.find((change: any) => 
+
+    return pendingChanges.changes.find((change: any) =>
       change.field === fieldPath || change.field_label === fieldPath
     );
   };
@@ -564,8 +564,8 @@ const SellerListingDetailPage: React.FC = () => {
   // Helper function to get nested field change (e.g., business_details.practice_name)
   const getNestedFieldChange = (parentField: string, childField: string) => {
     if (!pendingChanges?.changes) return null;
-    
-    return pendingChanges.changes.find((change: any) => 
+
+    return pendingChanges.changes.find((change: any) =>
       change.field === `${parentField}.${childField}`
     );
   };
@@ -585,7 +585,7 @@ const SellerListingDetailPage: React.FC = () => {
       const nestedField = fieldPath.split('.')[1];
       return change.new_value[nestedField];
     }
-    
+
     return change.new_value;
   };
 
@@ -602,7 +602,7 @@ const SellerListingDetailPage: React.FC = () => {
     sx?: any;
   }> = ({ children, fieldPath, sx = {} }) => {
     const hasChange = hasFieldChange(fieldPath);
-    
+
     if (!hasChange) {
       return <Box sx={sx}>{children}</Box>;
     }
@@ -685,7 +685,7 @@ const SellerListingDetailPage: React.FC = () => {
               </Typography>
             </Stack>
           </Box>
-          
+
           <Stack direction="row" spacing={1}>
             {listing.status === 'draft' && (
               <Button
@@ -718,8 +718,8 @@ const SellerListingDetailPage: React.FC = () => {
 
       {/* Simple Pending Changes Alert */}
       {showPendingChanges && pendingChanges && (
-        <Alert 
-          severity="info" 
+        <Alert
+          severity="info"
           sx={{ mb: 3 }}
           action={
             <Button
@@ -749,7 +749,7 @@ const SellerListingDetailPage: React.FC = () => {
           </Grid>
         </Grid>
       )}
-      
+
       {!analyticsLoading && !analytics && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12}>
@@ -757,7 +757,7 @@ const SellerListingDetailPage: React.FC = () => {
           </Grid>
         </Grid>
       )}
-      
+
       {!analyticsLoading && analytics && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
@@ -774,7 +774,7 @@ const SellerListingDetailPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -789,7 +789,7 @@ const SellerListingDetailPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -804,7 +804,7 @@ const SellerListingDetailPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -842,7 +842,7 @@ const SellerListingDetailPage: React.FC = () => {
                 Listing Information
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -852,7 +852,7 @@ const SellerListingDetailPage: React.FC = () => {
                     {listing.business_type}
                   </Typography>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Location
@@ -863,7 +863,7 @@ const SellerListingDetailPage: React.FC = () => {
                     </Typography>
                   </FieldWrapper>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Asking Price
@@ -877,7 +877,7 @@ const SellerListingDetailPage: React.FC = () => {
                     </Typography>
                   </FieldWrapper>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Annual Revenue
@@ -914,7 +914,7 @@ const SellerListingDetailPage: React.FC = () => {
                       <Typography variant="subtitle2" color="text.secondary">
                         Practice Name
                       </Typography>
-                      <FieldWrapper>
+                      <FieldWrapper fieldPath="business_details.practice_name">
                         <Typography variant="body1" sx={{ mb: 2 }}>
                           {listing.business_details.practice_name || 'Not specified'}
                         </Typography>
@@ -953,8 +953,8 @@ const SellerListingDetailPage: React.FC = () => {
                         Premises Type
                       </Typography>
                       <Typography variant="body1" sx={{ mb: 2 }}>
-                        {listing.business_details.premises_type ? 
-                          listing.business_details.premises_type.charAt(0).toUpperCase() + listing.business_details.premises_type.slice(1) 
+                        {listing.business_details.premises_type ?
+                          listing.business_details.premises_type.charAt(0).toUpperCase() + listing.business_details.premises_type.slice(1)
                           : 'Not specified'}
                       </Typography>
                     </Grid>
@@ -964,7 +964,7 @@ const SellerListingDetailPage: React.FC = () => {
                         NHS Contract
                       </Typography>
                       <Box sx={{ mb: 2 }}>
-                        <Chip 
+                        <Chip
                           label={listing.business_details.nhs_contract ? 'Yes' : 'No'}
                           color={listing.business_details.nhs_contract ? 'success' : 'default'}
                           size="small"
@@ -977,7 +977,7 @@ const SellerListingDetailPage: React.FC = () => {
                         CQC Registered
                       </Typography>
                       <Box sx={{ mb: 2 }}>
-                        <Chip 
+                        <Chip
                           label={listing.business_details.cqc_registered ? 'Yes' : 'No'}
                           color={listing.business_details.cqc_registered ? 'success' : 'default'}
                           size="small"
@@ -986,7 +986,7 @@ const SellerListingDetailPage: React.FC = () => {
                     </Grid>
                   </>
                 )}
-                
+
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
                     Description
@@ -1009,7 +1009,7 @@ const SellerListingDetailPage: React.FC = () => {
                   Photos ({listing.media_files.length})
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
-                
+
                 <Grid container spacing={2}>
                   {listing.media_files.map((media: any, index: number) => (
                     <Grid item xs={12} sm={6} md={4} key={media.id}>
@@ -1061,14 +1061,14 @@ const SellerListingDetailPage: React.FC = () => {
               </Paper>
             </Grid>
           )}
-          
+
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Quick Stats
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <Stack spacing={2}>
                 {listing.business_details && (
                   <>
@@ -1078,14 +1078,14 @@ const SellerListingDetailPage: React.FC = () => {
                         {listing.business_details.patient_list_size ? listing.business_details.patient_list_size.toLocaleString() : 'N/A'}
                       </Typography>
                     </Box>
-                    
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">Staff</Typography>
                       <Typography variant="body2" fontWeight="medium">
                         {listing.business_details.staff_count || 'N/A'}
                       </Typography>
                     </Box>
-                    
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">NHS Contract</Typography>
                       <Chip
@@ -1094,7 +1094,7 @@ const SellerListingDetailPage: React.FC = () => {
                         size="small"
                       />
                     </Box>
-                    
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2">CQC Registered</Typography>
                       <Chip
@@ -1103,25 +1103,25 @@ const SellerListingDetailPage: React.FC = () => {
                         size="small"
                       />
                     </Box>
-                    
+
                     <Divider />
                   </>
                 )}
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2">Created</Typography>
                   <Typography variant="body2">
                     {formatDate(listing.created_at)}
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2">Last Updated</Typography>
                   <Typography variant="body2">
                     {formatDate(listing.updated_at)}
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2">Status</Typography>
                   <Chip
@@ -1145,7 +1145,7 @@ const SellerListingDetailPage: React.FC = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Buyers who have viewed your listing
           </Typography>
-          
+
           {analyticsLoading ? (
             <Box>
               {[1, 2, 3].map((i) => (
@@ -1157,8 +1157,8 @@ const SellerListingDetailPage: React.FC = () => {
               {analytics.viewers.map((viewer: any, index: number) => (
                 <ListItem key={index} divider>
                   <ListItemAvatar>
-                    <Avatar sx={{ 
-                      bgcolor: viewer.viewer_type === 'authenticated' ? 'primary.main' : 'grey.400' 
+                    <Avatar sx={{
+                      bgcolor: viewer.viewer_type === 'authenticated' ? 'primary.main' : 'grey.400'
                     }}>
                       <Person />
                     </Avatar>
@@ -1170,9 +1170,9 @@ const SellerListingDetailPage: React.FC = () => {
                           {viewer.buyer_name}
                         </Typography>
                         {viewer.viewer_type === 'anonymous' && (
-                          <Chip 
-                            size="small" 
-                            label="Anonymous" 
+                          <Chip
+                            size="small"
+                            label="Anonymous"
                             color="default"
                             variant="outlined"
                           />
@@ -1217,7 +1217,7 @@ const SellerListingDetailPage: React.FC = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Manage your connection requests
           </Typography>
-          
+
           {analyticsLoading ? (
             <Box>
               {[1, 2, 3].map((i) => (
@@ -1230,60 +1230,60 @@ const SellerListingDetailPage: React.FC = () => {
                 Found {analytics.connections.length} connections
               </Typography>
               <List>
-              {analytics.connections.map((connection: any, index: number) => (
-                <ListItem key={index} divider>
-                  <ListItemAvatar>
-                    <Avatar>
-                      <Person />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={connection.buyer_name}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          "{connection.initial_message}"
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Requested {new Date(connection.requested_at).toLocaleDateString()} • 
-                          Status: {connection.status}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    <Stack direction="row" spacing={1}>
-                      {connection.status === 'pending' && (
-                        <>
-                          <IconButton
-                            color="success"
-                            onClick={() => handleConnectionAction(connection, 'approve')}
+                {analytics.connections.map((connection: any, index: number) => (
+                  <ListItem key={index} divider>
+                    <ListItemAvatar>
+                      <Avatar>
+                        <Person />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={connection.buyer_name}
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            "{connection.initial_message}"
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Requested {new Date(connection.requested_at).toLocaleDateString()} •
+                            Status: {connection.status}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <ListItemSecondaryAction>
+                      <Stack direction="row" spacing={1}>
+                        {connection.status === 'pending' && (
+                          <>
+                            <IconButton
+                              color="success"
+                              onClick={() => handleConnectionAction(connection, 'approve')}
+                            >
+                              <ThumbUp />
+                            </IconButton>
+                            <IconButton
+                              color="error"
+                              onClick={() => handleConnectionAction(connection, 'reject')}
+                            >
+                              <ThumbDown />
+                            </IconButton>
+                          </>
+                        )}
+                        {connection.status === 'approved' && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Chat />}
+                            onClick={() => navigate(`/messages/${connection.id}`)}
                           >
-                            <ThumbUp />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleConnectionAction(connection, 'reject')}
-                          >
-                            <ThumbDown />
-                          </IconButton>
-                        </>
-                      )}
-                      {connection.status === 'approved' && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Chat />}
-                          onClick={() => navigate(`/messages/${connection.id}`)}
-                        >
-                          Message
-                        </Button>
-                      )}
-                    </Stack>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
+                            Message
+                          </Button>
+                        )}
+                      </Stack>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
             </>
           ) : (
             <>
@@ -1317,7 +1317,7 @@ const SellerListingDetailPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Total views
                   </Typography>
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
                       <Typography variant="body2">This week</Typography>
@@ -1332,7 +1332,7 @@ const SellerListingDetailPage: React.FC = () => {
               )}
             </Paper>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -1348,7 +1348,7 @@ const SellerListingDetailPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Conversion rate
                   </Typography>
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
                       <Typography variant="body2">Total requests</Typography>
@@ -1367,10 +1367,10 @@ const SellerListingDetailPage: React.FC = () => {
       </TabPanel>
 
       {/* Connect to Buyer Dialog */}
-      <Dialog 
-        open={connectDialogOpen} 
+      <Dialog
+        open={connectDialogOpen}
         onClose={() => setConnectDialogOpen(false)}
-        maxWidth="sm" 
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
@@ -1394,7 +1394,7 @@ const SellerListingDetailPage: React.FC = () => {
           <Button onClick={() => setConnectDialogOpen(false)}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSendConnection}
             variant="contained"
             disabled={sendingConnection || !connectionMessage.trim()}
@@ -1405,10 +1405,10 @@ const SellerListingDetailPage: React.FC = () => {
       </Dialog>
 
       {/* Connection Status Dialog */}
-      <Dialog 
-        open={connectionStatusDialog} 
+      <Dialog
+        open={connectionStatusDialog}
         onClose={() => setConnectionStatusDialog(false)}
-        maxWidth="sm" 
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
@@ -1416,7 +1416,7 @@ const SellerListingDetailPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {selectedConnection?.action === 'approve' 
+            {selectedConnection?.action === 'approve'
               ? 'Approve this connection request to start a conversation.'
               : 'Reject this connection request. You can optionally provide a reason.'
             }
@@ -1435,7 +1435,7 @@ const SellerListingDetailPage: React.FC = () => {
           <Button onClick={() => setConnectionStatusDialog(false)}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleUpdateConnectionStatus}
             variant="contained"
             color={selectedConnection?.action === 'approve' ? 'success' : 'error'}

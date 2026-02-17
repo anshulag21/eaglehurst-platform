@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = "sk_test_dev_key"
     STRIPE_PUBLISHABLE_KEY: str = "pk_test_dev_key"
     STRIPE_WEBHOOK_SECRET: str = "whsec_dev_secret"
+    STRIPE_SUCCESS_URL: Optional[str] = None
+    STRIPE_CANCEL_URL: Optional[str] = None
     
     # AWS S3 - Optional for development
     AWS_ACCESS_KEY_ID: str = "dev-aws-key"

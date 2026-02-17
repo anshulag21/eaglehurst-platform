@@ -59,7 +59,7 @@ class ServiceRequest(Base):
     # Relationships
     user = relationship("User", foreign_keys=[user_id], back_populates="service_requests")
     listing = relationship("Listing")
-    admin_assigned = relationship("User", foreign_keys=[admin_assigned_id])
+    admin_assigned = relationship("User", foreign_keys=[admin_assigned_id], back_populates="assigned_service_requests")
     communications = relationship("ServiceCommunication", back_populates="service_request", cascade="all, delete-orphan")
     documents = relationship("ServiceDocument", back_populates="service_request", cascade="all, delete-orphan")
     

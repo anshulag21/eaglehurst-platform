@@ -14,8 +14,13 @@ COPY frontend/ .
 # Use a placeholder for the API URL which can be swapped at runtime or set during build
 ARG VITE_API_BASE_URL
 ARG VITE_BACKEND_BASE_URL
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL
+ARG VITE_WS_BASE_URL
+
+# Create .env file for Vite to pick up during build
+RUN rm -f .env* && \
+    echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" > .env && \
+    echo "VITE_BACKEND_BASE_URL=$VITE_BACKEND_BASE_URL" >> .env && \
+    echo "VITE_WS_BASE_URL=$VITE_WS_BASE_URL" >> .env
 
 # Skip tsc check for now to ensure production build completes
 RUN npx vite build

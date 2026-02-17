@@ -32,6 +32,13 @@ The application currently uses hardcoded development defaults for security keys 
     - Uncommented the custom nginx config copy in `frontend/Dockerfile`.
     - Set `server_name` to `_` for generic host matching.
 
+### 3. Stripe Production Redirects
+- **Issue:** Stripe Checkout was redirecting to `localhost:5173` instead of the production site.
+- **Fix:** 
+    - Updated `backend/app/core/config.py` to include `STRIPE_SUCCESS_URL` and `STRIPE_CANCEL_URL` in the `Settings` class (using Pydantic `BaseSettings` for reliable environment variable mapping).
+    - Refactored `backend/app/core/stripe_config.py` to use these central settings and remove hardcoded test keys.
+    - Verified and set `FRONTEND_URL`, `STRIPE_SUCCESS_URL`, and `STRIPE_CANCEL_URL` in Railway environment variables.
+
 ### 3. Production Database Stability
 - **Issue:** Scripts were failing with "Lost connection to MySQL".
 - **Discovery:** The production database is **PostgreSQL**, not MySQL. 

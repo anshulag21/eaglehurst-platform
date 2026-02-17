@@ -7,43 +7,43 @@ from typing import Dict
 from .config import settings
 
 # Stripe API Keys
-STRIPE_PUBLISHABLE_KEY = "pk_test_51SNayKFzSZuyQKLYsDI32LWsXIjqe2vGmkkjSZw8gVXW2nIT1yPf168iWeS4Sb42VUaCLjNEytOuvvKPPulq2Gf400DIyDFmZF"
-STRIPE_SECRET_KEY = "sk_test_51SNayKFzSZuyQKLY8UzIHbMNcTf3ZgpaJkpDt4LnDmGzS2EkRXBfe0SJajHbRY0KexddS9LzCCheUCCyZlRkfYsx00xY6bFt7c"
+STRIPE_PUBLISHABLE_KEY = settings.STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY = settings.STRIPE_SECRET_KEY
 
-# Webhook endpoint secret (to be updated when webhook is created)
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+# Webhook endpoint secret
+STRIPE_WEBHOOK_SECRET = settings.STRIPE_WEBHOOK_SECRET
 
 # Stripe Price IDs for subscription plans
 STRIPE_PRICE_IDS: Dict[str, Dict[str, str]] = {
     "buyer_basic": {
-        "monthly": "price_1SRC0xFzSZuyQKLYPpB66aaX",
-        "yearly": "price_1SRC20FzSZuyQKLYbvngEl27"
+        "monthly": "price_1T1r95FzSZuyQKLYb0ceYU1v",
+        "yearly": "price_1T1r95FzSZuyQKLYAlLlaIUt"
     },
     "buyer_premium": {
-        "monthly": "price_1SRC2KFzSZuyQKLYYvYGk1Kc", 
-        "yearly": "price_1SRC2aFzSZuyQKLYDie8mDJs"
+        "monthly": "price_1T1r96FzSZuyQKLYUUAMFl06",
+        "yearly": "price_1T1r97FzSZuyQKLYBdSpqMUp"
     },
     "seller_basic": {
-        "monthly": "price_1SRC2tFzSZuyQKLYJVnrNC9h",
-        "yearly": "price_1SRC3CFzSZuyQKLYoVEvv5qC"
+        "monthly": "price_1T1r98FzSZuyQKLYDsENVFaV",
+        "yearly": "price_1T1r98FzSZuyQKLYCHhH9Rg3"
     },
     "seller_premium": {
-        "monthly": "price_1SRC3UFzSZuyQKLYKM5Q3ZfX",
-        "yearly": "price_1SRC3kFzSZuyQKLYOXgqtULe"
+        "monthly": "price_1T1r99FzSZuyQKLYCxCSWJjG",
+        "yearly": "price_1T1r9AFzSZuyQKLYkZ7dznjo"
     }
 }
 
 # Stripe Product IDs
 STRIPE_PRODUCT_IDS: Dict[str, str] = {
-    "buyer_basic": "prod_TNxwiNOulQvZC4",
-    "buyer_premium": "prod_TNxyhzNnBuDK0s", 
-    "seller_basic": "prod_TNxy0RKPUeJEFX",
-    "seller_premium": "prod_TNxzafdPtwrz0p"
+    "buyer_basic": "prod_TzqqvSGE0yOqdX",
+    "buyer_premium": "prod_Tzqq9iG7iTq8A1",
+    "seller_basic": "prod_TzqqjSqx0IdoZl",
+    "seller_premium": "prod_Tzqq9wTUkD88ge"
 }
 
-# Success/Cancel URLs - use frontend URL from config
-SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL", f"{settings.FRONTEND_URL}/subscriptions/success")
-CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", f"{settings.FRONTEND_URL}/subscriptions")
+# Success/Cancel URLs
+SUCCESS_URL = settings.STRIPE_SUCCESS_URL or f"{settings.FRONTEND_URL}/subscriptions/success"
+CANCEL_URL = settings.STRIPE_CANCEL_URL or f"{settings.FRONTEND_URL}/subscriptions"
 
 # Webhook endpoint - use backend URL from config
 WEBHOOK_ENDPOINT = os.getenv("STRIPE_WEBHOOK_URL", f"{settings.API_URL}/api/v1/stripe/webhooks/stripe")
