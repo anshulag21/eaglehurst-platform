@@ -162,7 +162,7 @@ class UserBusinessLogic:
 
             # Update user fields
             update_data = profile_data.dict(exclude_unset=True)
-            updated_user = await self.user_dao.update(user_id, update_data)
+            updated_user = self.user_dao.update(user, update_data)
 
             return {
                 "id": updated_user.id,
@@ -652,7 +652,7 @@ class UserBusinessLogic:
 
     async def _get_seller_dashboard(self, user_id: UUID) -> Dict[str, Any]:
         """Get seller dashboard data"""
-        user = await self.user_dao.get_by_id(user_id)
+        user = self.user_dao.get_by_id(user_id)
         seller_profile = user.seller_profile
 
         # Get listing statistics
@@ -693,7 +693,7 @@ class UserBusinessLogic:
 
     async def _get_buyer_dashboard(self, user_id: UUID) -> Dict[str, Any]:
         """Get buyer dashboard data"""
-        user = await self.user_dao.get_by_id(user_id)
+        user = self.user_dao.get_by_id(user_id)
         buyer_profile = user.buyer_profile
 
         # Get connection statistics
@@ -735,7 +735,7 @@ class UserBusinessLogic:
         total_buyers = self.db.query(User).filter(User.user_type == UserType.BUYER).count()
         
         total_listings = self.db.query(Listing).count()
-        pending_listings = self.db.query(Listing).filter(Listing.status == ListingStatus.PENDING).count()
+        pending_listings = self.db.query(Listing).filter(Listing.status == ListingStatus.PENDING_APPROVAL).count()
         
         total_connections = self.db.query(Connection).count()
 
