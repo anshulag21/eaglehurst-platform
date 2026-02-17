@@ -22,6 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY backend/ .
 
+# Remove any local .env files that might have been copied
+RUN rm -f .env .env.backup .env.development .env.production
+
 # Expose the port
 EXPOSE 8000
 

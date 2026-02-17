@@ -151,20 +151,20 @@ export const initializeAuth = createAsyncThunk(
   async () => {
     try {
       const isAuthenticated = authService.isAuthenticated();
-      
+
       if (!isAuthenticated) {
         // No token, ensure all auth data is cleared
         authService.clearAuthData();
         return { user: null, profile: null, isAuthenticated: false };
       }
-      
+
       const storedUser = authService.getStoredUser();
       if (!storedUser) {
         // Token exists but no user data, clear everything
         authService.clearAuthData();
         return { user: null, profile: null, isAuthenticated: false };
       }
-      
+
       // Try to get fresh user data to validate token
       const response = await authService.getCurrentUser();
       if (response.success && response.data) {
@@ -233,7 +233,7 @@ const authSlice = createSlice({
         state.isInitialized = true;
         state.error = null;
       })
-      
+
       // Login
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
@@ -254,7 +254,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.isAuthenticated = false;
       })
-      
+
       // Register
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
@@ -268,7 +268,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      
+
       // Verify email
       .addCase(verifyEmail.pending, (state) => {
         state.isLoading = true;
@@ -288,13 +288,13 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      
+
       // Get current user
       .addCase(getCurrentUser.pending, (state) => {
-        state.isLoading = true;
+        // Background update, don't set global loading
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
-        state.isLoading = false;
+        // state.isLoading = false; // Background update
         state.profile = action.payload;
         state.error = null;
         // Update user verification status from profile data
@@ -305,10 +305,10 @@ const authSlice = createSlice({
         }
       })
       .addCase(getCurrentUser.rejected, (state, action) => {
-        state.isLoading = false;
+        // state.isLoading = false; // Background update
         state.error = action.payload as string;
       })
-      
+
       // Logout
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
@@ -327,7 +327,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
       })
-      
+
       // Forgot password
       .addCase(forgotPassword.pending, (state) => {
         state.isLoading = true;
@@ -341,7 +341,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      
+
       // Reset password
       .addCase(resetPassword.pending, (state) => {
         state.isLoading = true;

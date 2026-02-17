@@ -9,9 +9,9 @@ import {
   Container,
   Paper,
 } from '@mui/material';
-import { 
-  Close, 
-  CreditCard, 
+import {
+  Close,
+  CreditCard,
   Star,
   TrendingUp,
   Warning,
@@ -39,7 +39,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
       const lastRefresh = localStorage.getItem('profile_last_refresh');
       const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-      
+
       if (!lastRefresh || (now - parseInt(lastRefresh)) > fiveMinutes) {
         dispatch(getCurrentUser());
         localStorage.setItem('profile_last_refresh', now.toString());
@@ -50,17 +50,17 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
   // Clear banner dismissal if subscription status changes
   useEffect(() => {
     if (user && profile) {
-      const currentSubscriptionStatus = user.user_type === 'buyer' 
-        ? profile.buyer_profile?.subscription?.status 
+      const currentSubscriptionStatus = user.user_type === 'buyer'
+        ? profile.buyer_profile?.subscription?.status
         : profile.seller_profile?.subscription?.status;
-      
+
       const lastKnownStatus = localStorage.getItem('last_subscription_status');
-      
+
       if (lastKnownStatus && lastKnownStatus !== currentSubscriptionStatus) {
         // Subscription status changed, clear banner dismissal
         localStorage.removeItem('subscription_banner_dismissed');
       }
-      
+
       if (currentSubscriptionStatus) {
         localStorage.setItem('last_subscription_status', currentSubscriptionStatus);
       }
@@ -107,7 +107,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
 
   // Check if user has an active subscription based on their type
   let hasActiveSubscription = false;
-  
+
   if (user.user_type === 'buyer') {
     hasActiveSubscription = profile.buyer_profile?.subscription?.status === 'active';
   } else if (user.user_type === 'seller') {
@@ -137,7 +137,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
         buttonText: 'Subscribe Now',
       };
     }
-    
+
     return {
       title: 'Subscription Required',
       message: 'Choose a plan that fits your needs to access all platform features',
@@ -150,18 +150,18 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
 
   return (
     <Collapse in={isVisible}>
-      <Box 
-        className={className} 
-        sx={{ 
+      <Box
+        className={className}
+        sx={{
           background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
           py: 1.5,
         }}
       >
         <Container maxWidth="xl">
-          <Stack 
-            direction="row" 
-            alignItems="center" 
+          <Stack
+            direction="row"
+            alignItems="center"
             justifyContent="space-between"
             spacing={2}
           >
@@ -178,21 +178,21 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
               >
                 {bannerContent.icon}
               </Box>
-              
+
               <Box sx={{ flex: 1 }}>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    color: '#fff', 
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    color: '#fff',
                     fontWeight: 600,
                     mb: 0.5,
                   }}
                 >
                   {bannerContent.title}
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     color: 'rgba(255,255,255,0.9)',
                     fontSize: '0.875rem',
                   }}
@@ -224,7 +224,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
               >
                 {bannerContent.buttonText}
               </Button>
-              
+
               <IconButton
                 onClick={handleRefreshProfile}
                 size="small"
@@ -239,7 +239,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ className }) =>
               >
                 <Refresh fontSize="small" />
               </IconButton>
-              
+
               <IconButton
                 onClick={handleClose}
                 size="small"

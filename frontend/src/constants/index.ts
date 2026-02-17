@@ -1,9 +1,65 @@
 // API Configuration
 // Use a consistent base URL for all services
 // Note: Vite requires static access to import.meta.env for build-time replacement
-export const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${BACKEND_BASE_URL}/api/v1`;
-export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || BACKEND_BASE_URL.replace('http', 'ws') + '/ws';
+
+// CRITICAL: Get environment variables with proper fallbacks
+// In production, we MUST have these set, or we use production Railway URLs
+// In development, we default to localhost
+const getBackendBaseUrl = (): string => {
+  // If explicitly set via environment variable, use it
+  if (import.meta.env.VITE_BACKEND_BASE_URL) {
+    return import.meta.env.VITE_BACKEND_BASE_URL;
+  }
+
+  // In production mode, default to production Railway URL (never localhost)
+  if (import.meta.env.PROD) {
+    return 'https://eaglehurst-backend-production.up.railway.app';
+  }
+
+  // In development mode, use localhost
+  return 'http://localhost:8000';
+};
+
+const getApiBaseUrl = (): string => {
+  // If explicitly set, use it
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // Otherwise, derive from backend URL
+  return `${BACKEND_BASE_URL}/api/v1`;
+};
+
+const getWsBaseUrl = (): string => {
+  // If explicitly set, use it
+  if (import.meta.env.VITE_WS_BASE_URL) {
+    return import.meta.env.VITE_WS_BASE_URL;
+  }
+
+  // Otherwise, derive from backend URL (http -> ws, https -> wss)
+  return BACKEND_BASE_URL.replace(/^http/, 'ws') + '/ws';
+};
+
+export const BACKEND_BASE_URL = getBackendBaseUrl();
+export const API_BASE_URL = getApiBaseUrl();
+export const WS_BASE_URL = getWsBaseUrl();
+
+// Enhanced debug logging with validation
+console.log('🚀 CareAcquire App Configuration');
+console.log('📦 Mode:', import.meta.env.MODE);
+console.log('🏭 Production:', import.meta.env.PROD);
+console.log('📡 BACKEND_BASE_URL:', BACKEND_BASE_URL);
+console.log('📡 API_BASE_URL:', API_BASE_URL);
+console.log('📡 WS_BASE_URL:', WS_BASE_URL);
+console.log('📡 Current Origin:', window.location.origin);
+
+// Validate that in production we're not using localhost
+if (import.meta.env.PROD && BACKEND_BASE_URL.includes('localhost')) {
+  console.error('❌ CRITICAL ERROR: Production build is configured to use localhost!');
+  console.error('❌ This means environment variables were not properly set during build.');
+  console.error('❌ Expected VITE_BACKEND_BASE_URL to be set to production URL.');
+  // Don't throw error to avoid breaking the app, but log prominently
+}
 
 // Authentication
 export const TOKEN_STORAGE_KEY = 'careacquire_token';

@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True  # Set to True for development
     
+    # Environment (development, staging, production)
+    ENVIRONMENT: str = "development"  # Set to "production" in production
+    
     # Security - Required in production
     SECRET_KEY: str = "dev-secret-key-change-in-production"
     JWT_SECRET_KEY: str = "dev-jwt-secret-change-in-production"
@@ -32,8 +35,16 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"  # Override in production .env
     
     # Frontend URL for email links and redirects
-    FRONTEND_URL: str = "http://localhost:5173"  # Override in production .env
-    API_URL: str = "http://localhost:8000"  # Override in production .env
+    # In production, FRONTEND_URL must be set via environment variable
+    # In development, defaults to localhost:5173
+    def get_frontend_url_default(self) -> str:
+        return "http://localhost:5173" if self.ENVIRONMENT == "development" else ""
+    
+    def get_api_url_default(self) -> str:
+        return "http://localhost:8000" if self.ENVIRONMENT == "development" else ""
+    
+    FRONTEND_URL: str = ""  # Will be set via field_validator
+    API_URL: str = ""  # Will be set via field_validator
     
     # Email - SMTP Configuration
     SMTP_HOST: str = "smtp.gmail.com"
@@ -99,6 +110,34 @@ class Settings(BaseSettings):
         if len(v) < 32:
             logger.warning(f"⚠️  {field_name} should be at least 32 characters long")
         
+        return v
+    
+    @field_validator("FRONTEND_URL", "API_URL")
+    @classmethod
+    def validate_urls(cls, v: str, info) -> str:
+        """Validate URLs and set environment-aware defaults"""
+        field_name = info.field_name
+        
+        # Get ENVIRONMENT from values if available
+        # Note: This validator runs after ENVIRONMENT is set
+        values = info.data if hasattr(info, 'data') else {}
+        environment = values.get('ENVIRONMENT', os.getenv('ENVIRONMENT', 'development'))
+        
+        # If value is empty or not set, use environment-appropriate default
+        if not v or v == "":
+            if field_name == "FRONTEND_URL":
+                v = "http://localhost:5173" if environment == "development" else ""
+            elif field_name == "API_URL":
+                v = "http://localhost:8000" if environment == "development" else ""
+        
+        # In production, ensure URLs are set and don't contain localhost
+        if environment == "production":
+            if not v:
+                raise ValueError(f"{field_name} must be set in production environment")
+            if "localhost" in v or "127.0.0.1" in v:
+                raise ValueError(f"{field_name} cannot use localhost in production environment. Got: {v}")
+        
+        logger.info(f"✅ {field_name} validated: {v}")
         return v
     
     def get_allowed_origins(self) -> List[str]:

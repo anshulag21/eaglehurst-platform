@@ -5,7 +5,7 @@ Stripe payment service for handling subscriptions
 import stripe
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from ..core.stripe_config import (
@@ -183,7 +183,7 @@ class StripeService:
             logger.info(f"Got subscription plan: {subscription_plan.id}")
             
             # Use simple dates
-            start_date = datetime.utcnow()
+            start_date = datetime.now(timezone.utc)
             end_date = start_date + timedelta(days=30)  # Default to 30 days
             
             logger.info(f"Creating subscription record...")
@@ -247,10 +247,10 @@ class StripeService:
             # Update subscription details
             user_subscription.status = self._map_stripe_status(subscription_status)
             if current_period_end:
-                user_subscription.end_date = datetime.fromtimestamp(current_period_end)
+                user_subscription.end_date = datetime.fromtimestamp(current_period_end, timezone.utc)
             
             if canceled_at:
-                user_subscription.cancelled_at = datetime.fromtimestamp(canceled_at)
+                user_subscription.cancelled_at = datetime.fromtimestamp(canceled_at, timezone.utc)
             
             self.db.commit()
             logger.info(f"Updated subscription {subscription_id}")
@@ -280,7 +280,7 @@ class StripeService:
             
             # Update subscription status
             user_subscription.status = SubscriptionStatus.CANCELLED
-            user_subscription.cancelled_at = datetime.utcnow()
+            user_subscription.cancelled_at = datetime.now(timezone.utc)
             
             # Remove subscription from buyer profile if applicable
             if user_subscription.user.user_type == 'buyer' and user_subscription.user.buyer_profile:
@@ -331,7 +331,7 @@ class StripeService:
                 stripe_payment_intent_id=payment_intent_id,
                 stripe_invoice_id=invoice_id,
                 status=PaymentStatus.SUCCEEDED,
-                payment_date=datetime.utcnow()
+                payment_date=datetime.now(timezone.utc)
             )
             
             self.db.add(payment)
@@ -415,7 +415,7 @@ class StripeService:
             
             # Update local record
             user_subscription.status = SubscriptionStatus.CANCELLED
-            user_subscription.cancelled_at = datetime.utcnow()
+            user_subscription.cancelled_at = datetime.now(timezone.utc)
             
             self.db.commit()
             
@@ -442,7 +442,7 @@ class StripeService:
                 return None
             
             # Check if subscription is still valid based on end_date
-            current_time = datetime.now()
+            current_time = datetime.now(timezone.utc)
             is_expired = user_subscription.end_date and user_subscription.end_date < current_time
             
             # If subscription is expired, don't return it
@@ -556,7 +556,7 @@ class StripeService:
                     'amount': charge.amount / 100,  # Convert from cents
                     'currency': charge.currency.upper(),
                     'status': charge.status,
-                    'payment_date': datetime.fromtimestamp(charge.created).isoformat(),
+                    'payment_date': datetime.fromtimestamp(charge.created, timezone.utc).isoformat(),
                     'description': charge.description or f"Payment for {charge.amount / 100} {charge.currency.upper()}",
                     'invoice_url': charge.receipt_url
                 })
