@@ -856,12 +856,16 @@ class ListingBusinessLogic:
                 "caption": media.caption
             })
         
-        # Only include performance data for listing owners (sellers) or when explicitly requested
+        # Only include performance data for listing owners (sellers), admins, or when explicitly requested
         view_count = None
         connection_count = None
         saved_count_response = None
         
-        if include_private or self._is_listing_owner(listing, current_user):
+        is_admin = current_user and current_user.user_type == "admin"
+        if hasattr(current_user, 'jwt_user_type') and current_user.jwt_user_type == "admin":
+            is_admin = True
+
+        if include_private or self._is_listing_owner(listing, current_user) or is_admin:
             view_count = listing.view_count or 0
             connection_count = listing.connection_count or 0
             saved_count_response = saved_count

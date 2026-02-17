@@ -50,9 +50,12 @@ async def get_current_user(
         )
     
     # Add JWT payload user_type to user object for permission checks
-    jwt_user_type = payload.get("user_type")
+    # Priority 1: JWT user_type, Priority 2: User model user_type
+    jwt_user_type = payload.get("user_type") or payload.get("role")
     if jwt_user_type:
         user.jwt_user_type = jwt_user_type
+    else:
+        user.jwt_user_type = user.user_type
     
     return user
 
@@ -104,7 +107,12 @@ async def get_current_admin(
 ) -> User:
     """Get current authenticated admin"""
     
-    if current_user.user_type != UserType.ADMIN:
+    # Check both DB and JWT (if available) for admin role
+    is_admin = current_user.user_type == UserType.ADMIN
+    if hasattr(current_user, 'jwt_user_type') and current_user.jwt_user_type == UserType.ADMIN:
+        is_admin = True
+        
+    if not is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -118,7 +126,17 @@ async def get_current_seller_or_admin(
 ) -> User:
     """Get current authenticated seller or admin"""
     
-    if current_user.user_type not in [UserType.SELLER, UserType.ADMIN]:
+    # Check both DB and JWT (if available)
+    is_seller = current_user.user_type == UserType.SELLER
+    is_admin = current_user.user_type == UserType.ADMIN
+    
+    if hasattr(current_user, 'jwt_user_type'):
+        if current_user.jwt_user_type == UserType.SELLER:
+            is_seller = True
+        if current_user.jwt_user_type == UserType.ADMIN:
+            is_admin = True
+            
+    if not (is_seller or is_admin):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seller or admin access required"
@@ -132,7 +150,17 @@ async def get_current_buyer_or_admin(
 ) -> User:
     """Get current authenticated buyer or admin"""
     
-    if current_user.user_type not in [UserType.BUYER, UserType.ADMIN]:
+    # Check both DB and JWT (if available)
+    is_buyer = current_user.user_type == UserType.BUYER
+    is_admin = current_user.user_type == UserType.ADMIN
+    
+    if hasattr(current_user, 'jwt_user_type'):
+        if current_user.jwt_user_type == UserType.BUYER:
+            is_buyer = True
+        if current_user.jwt_user_type == UserType.ADMIN:
+            is_admin = True
+            
+    if not (is_buyer or is_admin):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Buyer or admin access required"

@@ -124,10 +124,11 @@ class AuthUtils:
     @staticmethod
     def create_token_response(user_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create complete token response"""
-        # Include user_type in JWT token for permission checks
+        # Include user_type and role in JWT token for permission checks
         token_data = {
             "sub": str(user_data["id"]),
-            "user_type": user_data.get("user_type")  # Add user_type to JWT payload
+            "user_type": user_data.get("user_type"),
+            "role": user_data.get("user_type")  # Add role as an alias for user_type
         }
         
         access_token = AuthUtils.create_access_token(data=token_data)
